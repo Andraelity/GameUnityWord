@@ -1,0 +1,301 @@
+    // Each #kernel tells which function to compile; you can have many kernels
+
+
+#pragma kernel forLoadImage
+
+#pragma kernel forPrintRectangleVertical
+
+#pragma kernel forPrintRectangleHorizontal
+
+#pragma kernel forLoadTextureCharacterPosition
+
+#pragma kernel forPrintTilesCharacter
+
+#pragma kernel forPrintTilesCharacterIndividual
+
+#pragma kernel forLoadTextureNumberPosition
+
+#pragma kernel forPrintTilesNumberIndividual
+
+
+// with cs.SetTexture
+#include "UnityCG.cginc"
+#include "FileImage.hlsl"
+
+
+int _WIDTH;
+
+
+RWStructuredBuffer<float4> bufferImageColor;
+
+
+RWStructuredBuffer<float> bufferRectangleVerticalPosition;
+RWStructuredBuffer<float> bufferRectangleVerticalColor;
+
+RWStructuredBuffer<float> bufferRectangleHorizontalPosition;
+RWStructuredBuffer<float> bufferRectangleHorizontalColor;
+
+RWStructuredBuffer<float> bufferTextureCharacterPositionX;
+RWStructuredBuffer<float> bufferTextureCharacterPositionY;
+RWStructuredBuffer<float> bufferTextureCharacterColor;
+
+
+RWStructuredBuffer<float> bufferTextureNumberPositionX;
+RWStructuredBuffer<float> bufferTextureNumberPositionY;
+RWStructuredBuffer<float> bufferTextureNumberColor;
+
+
+
+int _PositionX;
+int _PositionY;
+
+[numthreads(682,1,1)]
+void forLoadImage(uint3 id : SV_DispatchThreadID)
+{
+    //bufferImageColor;
+}
+
+
+
+
+[numthreads(124,1,1)]
+void forLoadTextureCharacterPosition(uint3 computer: SV_GroupThreadID, uint3 blockOfComputers: SV_GroupID)
+{
+    
+    uint positionOverArray = blockOfComputers.x * 124 + computer.x;
+
+    bufferTextureCharacterPositionX[positionOverArray] = computer.x;
+    bufferTextureCharacterPositionY[positionOverArray] = blockOfComputers.x;
+    
+    GroupMemoryBarrierWithGroupSync();
+
+}
+
+
+
+
+//here we can change the number of kernels with the objective to iterate over the whole array of data
+// over the whole buffer.
+
+[numthreads(124,1,1)]
+void forPrintTilesCharacter(uint3 computer: SV_GroupThreadID, uint3 blockOfComputers: SV_GroupID)
+{
+
+    //here there is a miss theory related with the generation
+    //of tiles, of sprites, of data selection
+    //of data representation and manipulation
+
+    // float xAxis = _PositionScreenX +  (-115 * _PositionTileX)  +  bufferTextureCharacterPositionX [(blockOfComputers.x * 308)  +  (920 * 153 * _PositionTileY)  +  (115  *  _PositionTileX)  +  computer.x];
+    // float yAxis = _PositionScreenY +  (-135 * _PositionTileY)  +  bufferTextureCharacterPositionY [(blockOfComputers.x * 920)  +  (920 * 153 * _PositionTileY)  +  (115  *  _PositionTileX)  +  computer.x];
+ 
+    float xAxis =  bufferTextureCharacterPositionX [(blockOfComputers.x * 124)  +  computer.x];
+    float yAxis =  bufferTextureCharacterPositionY [(blockOfComputers.x * 124)  +  computer.x];
+
+
+
+    float2 position = float2(xAxis, yAxis);
+
+    uint colorArray = ( (blockOfComputers.x * 124) +   computer.x) * 4 ;
+
+    float r = bufferTextureCharacterColor[colorArray ];
+    float g = bufferTextureCharacterColor[colorArray + 1 ];
+    float b = bufferTextureCharacterColor[colorArray + 2 ];
+    float a = bufferTextureCharacterColor[colorArray + 3 ];
+
+    float4 color = float4(r,g,b,a); 
+   
+    // float4 color = 1;    
+    
+    bufferImageColor[position.y * _WIDTH + position.x] = color;
+    
+    GroupMemoryBarrierWithGroupSync();
+
+}      
+
+
+
+
+int _PositionTileX;
+int _PositionTileY;
+
+int _PositionScreenX;
+int _PositionScreenY;
+
+//here we can change the number of kernels with the objective to iterate over the whole array of data
+// over the whole buffer.
+
+[numthreads(31,1,1)]
+void forPrintTilesCharacterIndividual(uint3 computer: SV_GroupThreadID, uint3 blockOfComputers: SV_GroupID)
+{
+
+    //here there is a miss theory related with the generation
+    //of tiles, of sprites, of data selection
+    //of data representation and manipulation
+
+    // float xAxis = _PositionScreenX +  (-115 * _PositionTileX)  +  bufferTextureCharacterPositionX [(blockOfComputers.x * 308)  +  (920 * 153 * _PositionTileY)  +  (115  *  _PositionTileX)  +  computer.x];
+    // float yAxis = _PositionScreenY +  (-135 * _PositionTileY)  +  bufferTextureCharacterPositionY [(blockOfComputers.x * 920)  +  (920 * 153 * _PositionTileY)  +  (115  *  _PositionTileX)  +  computer.x];
+ 
+    float xAxis = _PositionScreenX + (-31 * _PositionTileX) + bufferTextureCharacterPositionX [(blockOfComputers.x * 124) + (124 * 44 * _PositionTileY) + (31 * _PositionTileX) + computer.x];
+    float yAxis = _PositionScreenY + (-44 * _PositionTileY) + bufferTextureCharacterPositionY [(blockOfComputers.x * 124) + (124 * 44 * _PositionTileY) + (31 * _PositionTileX) + computer.x];
+
+
+
+    float2 position = float2(xAxis, yAxis);
+
+    // uint colorArray = ( (blockOfComputers.x * 124) +   computer.x) * 4 ;
+    uint colorArray = ((blockOfComputers.x * 124) +  (124 * 44 * _PositionTileY)  +  (31  *  _PositionTileX)  +  computer.x) * 4 ;
+
+    float r = bufferTextureCharacterColor[colorArray ];
+    float g = bufferTextureCharacterColor[colorArray + 1 ];
+    float b = bufferTextureCharacterColor[colorArray + 2 ];
+    float a = bufferTextureCharacterColor[colorArray + 3 ];
+
+    float4 color = float4(r,g,b,a); 
+   
+    // float4 color = 1;    
+    
+    bufferImageColor[position.y * _WIDTH + position.x] = color;
+    
+    GroupMemoryBarrierWithGroupSync();
+
+}      
+
+
+
+
+
+[numthreads(124,1,1)]
+void forLoadTextureNumberPosition(uint3 computer: SV_GroupThreadID, uint3 blockOfComputers: SV_GroupID)
+{
+    
+    uint positionOverArray = blockOfComputers.x * 124 + computer.x;
+
+    bufferTextureNumberPositionX[positionOverArray] = computer.x;
+    bufferTextureNumberPositionY[positionOverArray] = blockOfComputers.x;
+    
+    GroupMemoryBarrierWithGroupSync();
+
+}
+
+
+
+
+int _PositionTileNumberX;
+int _PositionTileNumberY;
+
+int _PositionScreenNumberX;
+int _PositionScreenNumberY;
+
+//here we can change the number of kernels with the objective to iterate over the whole array of data
+// over the whole buffer.
+
+[numthreads(31,1,1)]
+void forPrintTilesNumberIndividual(uint3 computer: SV_GroupThreadID, uint3 blockOfComputers: SV_GroupID)
+{
+
+    //here there is a miss theory related with the generation
+    //of tiles, of sprites, of data selection
+    //of data representation and manipulation
+
+ 
+    float xAxis = _PositionScreenNumberX + (-31 * _PositionTileNumberX) + bufferTextureNumberPositionX [(blockOfComputers.x * 124) + (124 * 44 * _PositionTileNumberY) + (31 * _PositionTileNumberX) + computer.x];
+    float yAxis = _PositionScreenNumberY + (-44 * _PositionTileNumberY) + bufferTextureNumberPositionY [(blockOfComputers.x * 124) + (124 * 44 * _PositionTileNumberY) + (31 * _PositionTileNumberX) + computer.x];
+
+
+
+    float2 position = float2(xAxis, yAxis);
+
+    // uint colorArray = ( (blockOfComputers.x * 124) +   computer.x) * 4 ;
+    uint colorArray = ((blockOfComputers.x * 124) +  (124 * 44 * _PositionTileNumberY)  +  (31  *  _PositionTileNumberX)  +  computer.x) * 4 ;
+
+    float r = bufferTextureNumberColor[colorArray ];
+    float g = bufferTextureNumberColor[colorArray + 1 ];
+    float b = bufferTextureNumberColor[colorArray + 2 ];
+    float a = bufferTextureNumberColor[colorArray + 3 ];
+
+    float4 color = float4(r,g,b,a); 
+   
+    // float4 color = 1;    
+    
+    bufferImageColor[position.y * _WIDTH + position.x] = color;
+    
+    GroupMemoryBarrierWithGroupSync();
+
+}      
+
+
+
+    
+
+
+int _ArrayPositionPrintRectangleHorizontal;
+int _PositionXRectangleHorizontal;
+int _PositionYRectangleHorizontal;
+
+[numthreads(682,1,1)]
+void forPrintRectangleHorizontal(uint3 id: SV_DispatchThreadID)
+{
+
+    float xAxis = _PositionXRectangleHorizontal  + bufferRectangleHorizontalPosition[id.x + _ArrayPositionPrintRectangleHorizontal];
+    float yAxis = _PositionYRectangleHorizontal + bufferRectangleHorizontalPosition[id.x + 1364 + _ArrayPositionPrintRectangleHorizontal];
+
+    float2 position = float2(xAxis, yAxis);
+
+    uint colorArray = (id.x + _ArrayPositionPrintRectangleHorizontal) * 4 ;
+
+    float r = bufferRectangleHorizontalColor[colorArray];
+    float g = bufferRectangleHorizontalColor[colorArray + 1];
+    float b = bufferRectangleHorizontalColor[colorArray + 2];
+    float a = bufferRectangleHorizontalColor[colorArray + 3];
+
+    float4 color = float4(r,g,b,a); 
+ 
+    // float4 color = 1;    
+    
+    bufferImageColor[position.y * _WIDTH + position.x] = color;
+
+}
+
+
+
+
+int _ArrayPositionPrintRectangleVertical;
+int _PositionXRectangleVertical;
+int _PositionYRectangleVertical;
+
+[numthreads(682,1,1)]
+void forPrintRectangleVertical(uint3 id: SV_DispatchThreadID)
+{
+
+    float xAxis = _PositionXRectangleVertical  + bufferRectangleVerticalPosition[id.x + _ArrayPositionPrintRectangleVertical];
+    float yAxis = _PositionYRectangleVertical + bufferRectangleVerticalPosition[id.x + 1364 + _ArrayPositionPrintRectangleVertical];
+ 
+
+    float2 position = float2(xAxis, yAxis);
+
+    uint colorArray = (id.x + _ArrayPositionPrintRectangleVertical) * 4 ;
+
+    float r = bufferRectangleVerticalColor[colorArray ];
+    float g = bufferRectangleVerticalColor[colorArray + 1 ];
+    float b = bufferRectangleVerticalColor[colorArray + 2 ];
+    float a = bufferRectangleVerticalColor[colorArray + 3 ];
+
+    float4 color = float4(r,g,b,a); 
+ 
+    // float4 color = 1;    
+    
+    bufferImageColor[position.y * _WIDTH + position.x] = color;
+
+}       
+
+
+
+
+
+
+
+
+
+
+
+
